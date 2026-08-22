@@ -11,6 +11,32 @@
   window.PROXY_HOST = window.PROXY_HOST || "https://orange-hill-2e61.gbscabral15.workers.dev";
   window.API_BACKEND = window.API_BACKEND || "http://br2.bronxyshost.com:4009";
 
+
+function getSessaoLocal() {
+    try {
+        const a = localStorage.getItem('fabi_session');
+        if (a) return JSON.parse(a);
+        const b = localStorage.getItem('neconecta_user_session');
+        if (b) return JSON.parse(b);
+    } catch (e) {}
+    return null;
+}
+function authQuery() {
+    const s = getSessaoLocal();
+    if (!s) return '';
+    const q = new URLSearchParams();
+    if (s.numero) q.set('numero', String(s.numero).replace(/\D/g, ''));
+    if (s.nome) q.set('nome', s.nome);
+    if (s.id && !s.nome) q.set('nome', s.id);
+    const str = q.toString();
+    return str ? ('?' + str) : '';
+}
+function withAuth(path) {
+    const q = authQuery();
+    if (!q) return path;
+    return path.includes('?') ? (path + '&' + q.slice(1)) : (path + q);
+}
+
   function apiUrl(path) {
     let target;
     if (!path) {
@@ -2364,7 +2390,7 @@ let transacaoAtual = null;
 
 // ========== FUNÇÕES DE ATUALIZAÇÃO (APENAS LEITURA) ==========
 function carregarCarteira() {
-    fetch(apiUrl('/api/carteira/saldo'))
+    fetch(apiUrl(withAuth('/api/carteira/saldo')))
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -2421,7 +2447,7 @@ function abrirModalInfoPrivado() {
     infoModal.show();
 }
 function carregarTransacoes() {
-    fetch(apiUrl('/api/carteira/transacoes'))
+    fetch(apiUrl(withAuth('/api/carteira/transacoes')))
         .then(response => response.json())
         .then(data => {
             if (data.success && data.transacoes.length > 0) {
@@ -2465,7 +2491,7 @@ function carregarTransacoes() {
 }
 
 function carregarContagemPendentes() {
-    fetch(apiUrl('/api/carteira/pendentes'))
+    fetch(apiUrl(withAuth('/api/carteira/pendentes')))
         .then(response => response.json())
         .then(data => {
             if (data.success && data.totalPendentes > 0) {

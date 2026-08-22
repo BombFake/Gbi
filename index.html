@@ -8801,6 +8801,20 @@ let gruposDataCompleto = [];
     // ==================== CONFIGURAÇÃO ====================
     const API_URL = 'https://orange-hill-2e61.gbscabral15.workers.dev/br2.bronxyshost.com:4009/proxy?url=http://br2.bronxyshost.com:4009';
     const USER_SESSION_KEY = 'neconecta_user_session';
+
+function resolverUrlFoto(url) {
+    const FALLBACK = 'https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0';
+    if (!url || url === '/flogo.jpg' || url === 'flogo.jpg') return FALLBACK;
+    if (String(url).startsWith('http://') || String(url).startsWith('https://')) return url;
+    // caminho relativo no backend
+    try {
+        if (typeof API_URL !== 'undefined' && url.startsWith('/')) {
+            return API_URL + url;
+        }
+    } catch (e) {}
+    return FALLBACK;
+}
+
     
     let currentUser = null;
     let posts = [], vagas = [], noticias = [], mensagensChat = [];
@@ -12626,7 +12640,7 @@ async function mostrarUsuariosOnline() {
                     const u = meData.user;
                     currentUser.id = u.id || currentUser.id;
                     currentUser.nome = u.nome || currentUser.nome;
-                    currentUser.avatar = u.avatar || u.foto || u.fotoPerfil || currentUser.avatar;
+                    currentUser.avatar = resolverUrlFoto(u.avatar || u.foto || u.fotoPerfil || currentUser.avatar);
                     currentUser.golds = u.golds != null ? u.golds : currentUser.golds;
                     currentUser.numero = u.numero || currentUser.numero;
                     if (typeof salvarSessao === 'function') salvarSessao();
@@ -13103,7 +13117,7 @@ function mostrarSeguindoDeOutroUsuario(usuarioId, usuarioNome) {
         
         if (currentUser) {
             if (container) {
-                container.innerHTML = `<img src="${currentUser.avatar}" class="user-photo" onclick="mudarSecao('perfil')" title="${currentUser.nome}" alt="Perfil">`;
+                container.innerHTML = `<img src="${resolverUrlFoto(currentUser.avatar)}" class="user-photo" onclick="mudarSecao('perfil')" title="${currentUser.nome}" alt="Perfil" onerror="this.onerror=null;this.src='https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0'">`;
             }
             if (avatarCriar) {
                 avatarCriar.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="Avatar">`;
