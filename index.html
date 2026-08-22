@@ -9366,7 +9366,7 @@ async function criarSalaComLink(url, tituloPersonalizado = null) {
                 creatorId: criadorId,
                 creatorAvatar: criadorAvatar,
                 isGuest: !currentUser,
-                playerState: { currentTime: 0, isPlaying: false, timestamp: Date.now() }
+                playerState: { currentTime: 0, isPlaying: true, timestamp: Date.now() }
             })
         });
         
@@ -11515,11 +11515,20 @@ function onPlayerReady(event) {
     console.log('✅ Player pronto!');
     watchPlayerReady = true;
     try {
-        if (event && event.target && typeof event.target.playVideo === 'function') {
-            event.target.playVideo();
-        } else if (watchPlayer && typeof watchPlayer.playVideo === 'function') {
-            watchPlayer.playVideo();
+        const p = (event && event.target) || watchPlayer;
+        if (p) {
+            try { if (p.unMute) p.unMute(); } catch(e) {}
+            try { if (p.setVolume) p.setVolume(100); } catch(e) {}
+            if (typeof p.playVideo === 'function') p.playVideo();
         }
+        // reforço após 1s (políticas de autoplay do browser)
+        setTimeout(() => {
+            try {
+                if (watchPlayer && watchPlayer.getPlayerState && watchPlayer.getPlayerState() !== 1) {
+                    watchPlayer.playVideo();
+                }
+            } catch(e) {}
+        }, 1000);
     } catch (e) { console.warn('playVideo', e); }
     if (watchRoomAtual) {
         sincronizarTempo();
@@ -11556,26 +11565,36 @@ async function sincronizarTempo() {
         const room = await response.json();
         
         if (room && room.playerState) {
-            const serverTime = room.playerState.currentTime || 0;
-            const serverPlaying = room.playerState.isPlaying || false;
+            const serverTime = Number(room.playerState.currentTime) || 0;
+            // Default: considerar tocando se o campo não vier (evita ficar preso em 00:00)
+            const serverPlaying = room.playerState.isPlaying !== false;
             const serverTimestamp = room.playerState.timestamp || Date.now();
             const elapsed = (Date.now() - serverTimestamp) / 1000;
             const estimatedTime = serverPlaying ? serverTime + elapsed : serverTime;
             
             try {
-                const playerTime = watchPlayer.getCurrentTime();
-                if (Math.abs(playerTime - estimatedTime) > 2) {
+                const playerTime = watchPlayer.getCurrentTime() || 0;
+                // Não seekar para 0 se o player já está andando (evita reset)
+                if (estimatedTime > 1 && Math.abs(playerTime - estimatedTime) > 2) {
                     watchPlayer.seekTo(estimatedTime, true);
                 }
                 
-                if (serverPlaying && watchPlayer.getPlayerState() !== 1) {
-                    watchPlayer.playVideo();
-                } else if (!serverPlaying && watchPlayer.getPlayerState() === 1) {
+                if (serverPlaying) {
+                    try { watchPlayer.unMute && watchPlayer.unMute(); } catch(e) {}
+                    if (watchPlayer.getPlayerState() !== 1) {
+                        watchPlayer.playVideo();
+                    }
+                } else if (watchPlayer.getPlayerState() === 1) {
                     watchPlayer.pauseVideo();
                 }
             } catch(e) {}
+        } else {
+            // Sem estado no servidor: tenta tocar mesmo assim
+            try { watchPlayer.playVideo(); } catch(e) {}
         }
-    } catch (error) {}
+    } catch (error) {
+        try { watchPlayer.playVideo(); } catch(e) {}
+    }
 }
 
 async function reportarEstado() {
@@ -11749,7 +11768,7 @@ async function criarSalaDoMarujoFlix(titulo, videoUrl, poster) {
                 creatorId: criadorId,
                 creatorAvatar: criadorAvatar,
                 isGuest: isGuest,
-                playerState: { currentTime: 0, isPlaying: false, timestamp: Date.now() }
+                playerState: { currentTime: 0, isPlaying: true, timestamp: Date.now() }
             })
         });
         
@@ -11895,7 +11914,7 @@ async function criarSalaWatch() {
                 creator: currentUser.nome,
                 creatorId: currentUser.id,
                 creatorAvatar: currentUser.avatar,
-                playerState: { currentTime: 0, isPlaying: false, timestamp: Date.now() }
+                playerState: { currentTime: 0, isPlaying: true, timestamp: Date.now() }
             })
         });
         
@@ -16655,28 +16674,42 @@ function trocarFotoPerfil(event) {
 }
 
 function enviarFotoBase64Perfil(base64, filename, btn, originalText) {
-    fetch('/alterar-foto', {
+    let auth = {};
+    try {
+        const s = JSON.parse(localStorage.getItem('fabi_session') || '{}');
+        auth = { nome: s.nome || s.id || '', nomeConta: s.nome || s.id || '', contaNumero: s.numero ? String(s.numero).replace(/\D/g,'') : '' };
+    } catch (e) {}
+    fetch(API_URL + '/alterar-foto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
             fotoUrl: base64,
             filename: filename,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            ...auth
         })
     })
     .then(r => r.json())
     .then(data => {
         if (data.sucesso) {
-            // Atualizar avatar do usuário
-            currentUser.avatar = base64;
+            // Preferir URL do servidor se veio; senão base64 local
+            let urlFoto = base64;
+            if (data.novaFoto) {
+                urlFoto = String(data.novaFoto).startsWith('http') ? data.novaFoto : (API_URL + data.novaFoto);
+            }
+            currentUser.avatar = urlFoto;
+            try {
+                const fs = JSON.parse(localStorage.getItem('fabi_session') || '{}');
+                fs.avatar = urlFoto;
+                localStorage.setItem('fabi_session', JSON.stringify(fs));
+            } catch (e) {}
             
             // Atualizar em todos os lugares
             atualizarPerfilUI();
             
             // Atualizar o modal também
             const modalPhoto = document.getElementById('modalUserPhoto');
-            if (modalPhoto) modalPhoto.src = base64;
+            if (modalPhoto) modalPhoto.src = urlFoto;
             
             // Re-renderizar o perfil
             renderizarPerfil();
