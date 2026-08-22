@@ -49,11 +49,11 @@
     </div>
     <div id="msg" class="msg"></div>
     <form id="loginForm">
-      <label for="username">Usuário (nome do cadastro)</label>
-      <input id="username" name="username" type="text" required autocomplete="username" placeholder="Seu nome de usuário">
-      <label for="password">Senha (ID do registro)</label>
-      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Seu ID de registro">
-      <p class="hint">No sistema antigo a “senha” é o <strong>ID</strong> salvo no cadastro (campo <code>id</code>), não uma senha digitada à parte.</p>
+      <label for="username">Usuário</label>
+      <input id="username" name="username" type="text" required autocomplete="username" placeholder="Seu usuário">
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Sua senha">
+      
       <button type="submit" id="btn">Entrar</button>
     </form>
     <div class="links">
@@ -135,15 +135,28 @@
 
       if (res.ok && data && data.success) {
         const u = data.user || {};
-        localStorage.setItem("fabi_session", JSON.stringify({
+        const sess = {
           logado: true,
           id: u.id || username,
           nome: u.nome || username,
+          email: u.email || "",
           numero: u.numero || "",
           golds: u.golds || u.dinheiro || 0,
           rank: 0,
-          avatar: "/flogo.jpg",
+          avatar: (u.avatar && !String(u.avatar).startsWith("/")) ? u.avatar : "https://fabibot.vercel.app/flogo.jpg",
+          provider: "servidor",
           at: Date.now()
+        };
+        localStorage.setItem("fabi_session", JSON.stringify(sess));
+        // Mesma sessão que o index usa
+        localStorage.setItem("neconecta_user_session", JSON.stringify({
+          id: sess.id,
+          nome: sess.nome,
+          email: sess.email,
+          avatar: sess.avatar,
+          provider: "servidor",
+          seguidores: [],
+          seguindo: []
         }));
         show("Login ok! Redirecionando...", true);
         setTimeout(() => { location.href = redirectTo; }, 400);

@@ -1188,21 +1188,11 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .stats-number, .card-title {
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-whatsapp">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/conectar">
-                <img src="/flogo.jpg" alt="Fabi Bot"> <strong>Fabi Bot</strong>
+            <a class="navbar-brand" href="conectar.html">
+                <img src="https://fabibot.vercel.app/flogo.jpg" alt="Fabi Bot"> <strong>Fabi Bot</strong>
             </a>
             
-            <div class="d-flex align-items-center">
-                <span class="text-white me-3">
-                    <i class="fas fa-user"></i> 
-                </span>
-                <a href="/logout" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
-                <a href="/login?redirect=/conectar" class="btn btn-light">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
+            <div class="d-flex align-items-center ms-auto" id="fbUserNav"></div>
         </div>
     </nav>
     
@@ -4056,5 +4046,48 @@ $(document).ready(function() {
         setTimeout(carregarDadosAtualizados, 10000);
     }
 });</script>
+
+<script>
+(function () {
+  function getSess() {
+    try {
+      const a = localStorage.getItem("fabi_session");
+      if (a) return JSON.parse(a);
+      const b = localStorage.getItem("neconecta_user_session");
+      if (b) return JSON.parse(b);
+    } catch (e) {}
+    return null;
+  }
+  function renderUserNav() {
+    const s = getSess();
+    const el = document.getElementById("fbUserNav");
+    if (!el) return;
+    if (s && (s.logado || s.id || s.nome)) {
+      const nome = s.nome || s.id || "Usuário";
+      const av = (s.avatar && !String(s.avatar).startsWith("/")) ? s.avatar : "https://fabibot.vercel.app/flogo.jpg";
+      el.innerHTML = `
+        <div class="d-flex align-items-center gap-2 text-white">
+          <img src="${av}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,.3)">
+          <div class="d-none d-md-block" style="line-height:1.2">
+            <div style="font-weight:700;font-size:13px">${nome}</div>
+            <div style="font-size:11px;opacity:.8">Logado</div>
+          </div>
+          <a href="index.html" class="btn btn-sm btn-outline-light ms-1">Site</a>
+          <button class="btn btn-sm btn-outline-light" id="fbLogoutBtn" title="Sair">Sair</button>
+        </div>`;
+      const btn = document.getElementById("fbLogoutBtn");
+      if (btn) btn.onclick = () => {
+        localStorage.removeItem("fabi_session");
+        localStorage.removeItem("neconecta_user_session");
+        location.href = "login.html?redirect=conectar.html";
+      };
+    } else {
+      el.innerHTML = `<a href="login.html?redirect=conectar.html" class="btn btn-sm btn-light"><i class="fas fa-sign-in-alt"></i> Entrar</a>`;
+    }
+  }
+  document.addEventListener("DOMContentLoaded", renderUserNav);
+})();
+</script>
+
 </body>
 </html>
