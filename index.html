@@ -6820,7 +6820,7 @@ body.light-mode .command-badge-mobile {
         
         <!-- 🔒 VISITANTE (NÃO LOGADO): VÍDEO + BOTÃO DE ENTRAR -->
         <div class="fz-intro-actions">
-            <a href="/login" class="fz-btn fz-btn-accent"><i class="fas fa-right-to-bracket"></i> Entrar</a>
+            <a href="login.html" class="fz-btn fz-btn-accent"><i class="fas fa-right-to-bracket"></i> Entrar</a>
         </div>
 
         <div class="fz-intro-video-wrap" id="introVideoWrap">
@@ -6828,7 +6828,7 @@ body.light-mode .command-badge-mobile {
                 <source src="/fabibot.mp4" type="video/mp4">
                 Seu navegador não suporta vídeos HTML5.
             </video>
-            <p class="fz-intro-video-caption">Assista e veja como automatizar seu grupo com inteligência e diversão! <a href="/login">Já tem conta? Entrar</a></p>
+            <p class="fz-intro-video-caption">Assista e veja como automatizar seu grupo com inteligência e diversão! <a href="login.html">Já tem conta? Entrar</a></p>
         </div>
         
     </div>
@@ -11173,12 +11173,19 @@ function compartilharFacebookWatch(url) {
 function loadYouTubeAPI() {
     if (window.YT && window.YT.Player) {
         console.log('✅ YouTube API já carregada');
+        if (typeof window.onYouTubeIframeAPIReady === 'function') {
+            try { window.onYouTubeIframeAPIReady(); } catch (e) {}
+        }
         return;
     }
-    
     if (document.getElementById('youtube-api-script')) return;
-    
     console.log('📥 Carregando YouTube API...');
+    // Garante callback global ANTES do script (exigência do YouTube)
+    if (typeof window.onYouTubeIframeAPIReady !== 'function') {
+        window.onYouTubeIframeAPIReady = function () {
+            console.log('✅ YouTube API pronta (fallback)!');
+        };
+    }
     const tag = document.createElement('script');
     tag.id = 'youtube-api-script';
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -12984,7 +12991,7 @@ function mostrarSeguindoDeOutroUsuario(usuarioId, usuarioNome) {
     
     function loginGoogle() {
         // Login igual ao index.html: redireciona para a página de login do servidor.
-        window.location.href = '/login';
+        window.location.href = 'login.html';
     }
 
     function logoutGoogle() {
@@ -16742,7 +16749,7 @@ function escapeHTML(str) {
     if (carregado) return;
     try {
         // 🔥 CORREÇÃO: Usar a rota do próprio servidor
-        const resp = await fetch('/api/bot-comandos');
+        const resp = await fetch(API_URL + '/api/bot-comandos');
         
         if (!resp.ok) {
             throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
@@ -16909,7 +16916,7 @@ function escapeHTML(str) {
         if (!descricao) return;
 
         try {
-            const resp = await fetch('/api/bot-comandos/reportar', {
+            const resp = await fetch(API_URL + '/api/bot-comandos/reportar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ comando, descricao: descricao.trim() })
@@ -16990,7 +16997,7 @@ function escapeHTML(str) {
             return;
         }
         try {
-            const resp = await fetch('/api/bot-comandos/relatos');
+            const resp = await fetch(API_URL + '/api/bot-comandos/relatos');
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
             const data = await resp.json();
@@ -17122,7 +17129,7 @@ function escapeHTML(str) {
         btn.textContent = '⏳ Consultando a IA...';
 
         try {
-            const resp = await fetch('/api/bot-comandos/explicar', {
+            const resp = await fetch(API_URL + '/api/bot-comandos/explicar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ comando, prefixo })
@@ -17327,7 +17334,7 @@ async function gerarImagemIA() {
     }
 
     try {
-        const resp = await fetch('/api/generate-image', {
+        const resp = await fetch(API_URL + '/api/generate-image', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ prompt, ratio })
@@ -17806,7 +17813,7 @@ function atualizarBadgeComandos() {
 // ===== CARREGAR APENAS O CONTADOR DE COMANDOS =====
 async function carregarContadorComandos() {
     try {
-        const resp = await fetch('/api/bot-comandos');
+        const resp = await fetch(API_URL + '/api/bot-comandos');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         
         const data = await resp.json();
@@ -17874,7 +17881,7 @@ async function carregarPodiumMedalhistas() {
     }
 
     try {
-        const resp = await fetch('/api/top3-medalhistas');
+        const resp = await fetch(API_URL + '/api/top3-medalhistas');
         if (!resp.ok) throw new Error('Falha ao buscar pódio');
         const data = await resp.json();
         const podio = (data && data.success && Array.isArray(data.podio)) ? data.podio : [];
@@ -17982,7 +17989,7 @@ async function carregarRankingAoVivo() {
         <div class="podium-skeleton" style="height:44px;margin-bottom:8px;"></div>`;
 
     try {
-        const resp = await fetch('/api/ranking-live');
+        const resp = await fetch(API_URL + '/api/ranking-live');
         if (!resp.ok) throw new Error('Falha ao buscar ranking ao vivo');
         const data = await resp.json();
         if (!data || !data.success) throw new Error('Resposta inválida do ranking ao vivo');

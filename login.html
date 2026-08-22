@@ -127,24 +127,27 @@
         data = await res.json();
       }
 
-      if (res.ok && (data?.success !== false)) {
-        // Guarda sessão local para o front estático
-        const user = data?.user || data?.username || { id: username, nome: username };
+      if (res.ok && data && data.success) {
         try {
           localStorage.setItem("fabi_session", JSON.stringify({
             logado: true,
-            id: user.id || user.username || username,
-            nome: user.nome || user.name || username,
-            token: data?.token || null,
+            id: (data.user && (data.user.id || data.user.nome)) || username,
+            nome: (data.user && data.user.nome) || username,
+            numero: (data.user && data.user.numero) || "",
+            golds: (data.user && (data.user.dinheiro || data.user.golds)) || 0,
+            rank: 0,
+            avatar: "/flogo.jpg",
+            token: data.token || null,
             at: Date.now()
           }));
         } catch (_) {}
         show("Login ok! Redirecionando...", true);
-        setTimeout(() => { location.href = redirectTo; }, 600);
+        setTimeout(() => { location.href = redirectTo; }, 500);
         return;
       }
 
-      show((data && (data.message || data.error)) || "Usuário ou senha inválidos", false);
+      const errMsg = (data && (data.message || data.error)) || ("Erro HTTP " + res.status + " — confira usuário/senha (a senha é o ID do registro)");
+      show(errMsg, false);
     } catch (err) {
       console.error(err);
       show("Erro de conexão com o servidor. Tente de novo.", false);
