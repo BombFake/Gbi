@@ -4064,7 +4064,7 @@ $(document).ready(function() {
     if (!el) return;
     if (s && (s.logado || s.id || s.nome)) {
       const nome = s.nome || s.id || "Usuário";
-      const av = (s.avatar && !String(s.avatar).startsWith("/")) ? s.avatar : "https://fabibot.vercel.app/flogo.jpg";
+      const av = (s.avatar && String(s.avatar).startsWith("http")) ? s.avatar : "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0";
       el.innerHTML = `
         <div class="d-flex align-items-center gap-2 text-white">
           <img src="${av}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,.3)">

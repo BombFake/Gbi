@@ -103,7 +103,7 @@
 <script>
   // Sessão no browser (HTML estático — sem EJS)
   (function () {
-    let s = { logado: false, id: "", nome: "", numero: "", email: "", avatar: "https://fabibot.vercel.app/flogo.jpg", golds: 0, rank: 0, ip: "" };
+    let s = { logado: false, id: "", nome: "", numero: "", email: "", avatar: "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0", golds: 0, rank: 0, ip: "" };
     try {
       let raw = localStorage.getItem("fabi_session");
       if (!raw) raw = localStorage.getItem("neconecta_user_session");
@@ -112,7 +112,7 @@
         if (j && (j.logado || j.id || j.nome)) {
           s = Object.assign(s, j, { logado: true });
           if (!s.avatar || s.avatar === "/flogo.jpg" || s.avatar === "flogo.jpg") {
-            s.avatar = "https://fabibot.vercel.app/flogo.jpg";
+            s.avatar = "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0";
           }
         }
       }
@@ -6727,7 +6727,7 @@ body.light-mode .command-badge-mobile {
     <div id="userModal" class="user-modal">
         <div class="user-modal-content">
             <div class="user-modal-photo-area">
-                <img src="https://fabibot.vercel.app/flogo.jpg" id="modalUserPhoto" class="user-modal-photo">
+                <img src="https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0" id="modalUserPhoto" class="user-modal-photo">
                 <input type="file" id="fotoFile" accept="image/*" style="display:none">
             </div>
             <div class="user-info-box">
@@ -8847,8 +8847,8 @@ function restaurarSessao() {
         try {
             const dados = JSON.parse(sessao);
             console.log('🔄 Restaurando sessão completa:', dados.nome);
-            let av = dados.avatar || "https://fabibot.vercel.app/flogo.jpg";
-            if (av === "/flogo.jpg" || av === "flogo.jpg") av = "https://fabibot.vercel.app/flogo.jpg";
+            let av = dados.avatar || "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0";
+            if (av === "/flogo.jpg" || av === "flogo.jpg") av = "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0";
             
             currentUser = {
                 id: dados.id,
@@ -12609,11 +12609,40 @@ async function mostrarUsuariosOnline() {
             id: sessao.id,
             nome: sessao.nome || sessao.id,
             email: sessao.email || '',
-            avatar: (sessao.avatar && sessao.avatar !== '/flogo.jpg') ? sessao.avatar : 'https://fabibot.vercel.app/flogo.jpg',
+            avatar: (sessao.avatar && sessao.avatar !== '/flogo.jpg') ? sessao.avatar : 'https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0',
             golds: sessao.golds || 0,
             rank: sessao.rank || 0,
             provider: 'servidor'
         };
+
+        
+        // Atualiza foto/dados reais do registro no servidor
+        try {
+            const meUrl = API_URL + '/api/me?id=' + encodeURIComponent(currentUser.id || currentUser.nome || '');
+            const meRes = await fetch(meUrl);
+            if (meRes.ok) {
+                const meData = await meRes.json();
+                if (meData && meData.success && meData.user) {
+                    const u = meData.user;
+                    currentUser.id = u.id || currentUser.id;
+                    currentUser.nome = u.nome || currentUser.nome;
+                    currentUser.avatar = u.avatar || u.foto || u.fotoPerfil || currentUser.avatar;
+                    currentUser.golds = u.golds != null ? u.golds : currentUser.golds;
+                    currentUser.numero = u.numero || currentUser.numero;
+                    if (typeof salvarSessao === 'function') salvarSessao();
+                    try {
+                        const fs = JSON.parse(localStorage.getItem('fabi_session') || '{}');
+                        fs.avatar = currentUser.avatar;
+                        fs.nome = currentUser.nome;
+                        fs.id = currentUser.id;
+                        fs.golds = currentUser.golds;
+                        fs.numero = currentUser.numero;
+                        localStorage.setItem('fabi_session', JSON.stringify(fs));
+                    } catch (_) {}
+                    if (typeof atualizarPerfilUI === 'function') atualizarPerfilUI();
+                }
+            }
+        } catch (e) { console.warn('api/me', e); }
 
         // INICIAR PING DE ONLINE
         iniciarOnlinePing();

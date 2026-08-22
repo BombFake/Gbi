@@ -135,15 +135,16 @@
 
       if (res.ok && data && data.success) {
         const u = data.user || {};
+        try { localStorage.removeItem("fabi_session"); localStorage.removeItem("neconecta_user_session"); } catch(_){}
         const sess = {
           logado: true,
-          id: u.id || username,
+          id: u.id || u.nome || username,
           nome: u.nome || username,
           email: u.email || "",
           numero: u.numero || "",
           golds: u.golds || u.dinheiro || 0,
           rank: 0,
-          avatar: (u.avatar && !String(u.avatar).startsWith("/")) ? u.avatar : "https://fabibot.vercel.app/flogo.jpg",
+          avatar: u.avatar || u.foto || u.fotoPerfil || "https://dl.dropboxusercontent.com/scl/fi/pe6liwd0tixj39cn1o5o4/1752896153979.jpeg?rlkey=9dchim7lrqdo2zpl1f1usultf&dl=0",
           provider: "servidor",
           at: Date.now()
         };
