@@ -7353,6 +7353,177 @@ let cfgPaginaAtual = 1;
 const cfgPorPagina = 8;
 let cfgPainelJaInicializado = false;
 
+
+// ===== Configurações do grupo (espelha o EJS) =====
+const CFG_NOMES = {
+  sogrupo: "👥 Só responde em grupos",
+  soadm: "👑 Somente Administrador usa a Robô",
+  modovoz: "🎙 Comando por Voz",
+  antipolitica: "🏛️ Bloqueia mensagens sobre política",
+  antirepeticoes: "🔁 Bloqueia mensagens repetidas",
+  antistatus: "📢 Impede compartilhamento de Status",
+  antiimg: "🖼️ Bloquear Imagens",
+  antivideo: "🎥 Bloquear Vídeos",
+  antiaudio: "🔊 Bloquear Áudios",
+  antisticker: "💬 Bloquear Figurinhas",
+  antidoc: "📄 Bloquear Documentos",
+  antictt: "📞 Bloquear Contatos",
+  antiloc: "📍 Bloquear Localizações",
+  antilinkgp: "🔗 Remover Links de Grupo",
+  level: "🔝 Remover Links de Canal",
+  antilinkhard: "🛑 Remover Todos os Links",
+  antifake: "🕵️ Bloquear Números Fakes",
+  antispam: "🚫 Bloquear Spam",
+  antinotas: "💸 Bloquear Anúncios / Divulgações",
+  antiporno: "🔞 Bloquear Conteúdo Pornográfico",
+  simi1: "👩 ChatBot Voz Feminina",
+  fabidomal: "👨 Chatbot Voz Masculina",
+  fabimeme: "🤡 Chatbot Voz Meme",
+  autosticker: "🎉 Criar Figurinhas Automaticamente",
+  jogos: "🎮 Ativar Jogos (use o /menujogos)",
+  sistemGold: "🪙 Modo RPG (use: /menurpg)",
+  nsfw: "⚠️ Verificar Links Suspeitos",
+  registrarFIGUS: "🎁 Bem-Vindo por Figurinhas",
+  autodl: "📥 Baixar Mídias Automaticamente",
+  Odelete: "📥 Baixar Mídia em Vídeo",
+  jovempan: "📻 Notícias Jovem Pan",
+  oliberal: "🗞️ Notícias O Liberal",
+  futebol: "⚽ Notícias de Futebol (ge.globo)"
+};
+const CFG_ORDEM = ["sogrupo","soadm","modovoz","antipolitica","antirepeticoes","antistatus","antiimg","antivideo","antiaudio","antisticker","antidoc","antictt","antiloc","antilinkgp","level","antilinkhard","antifake","antispam","antinotas","antiporno","simi1","fabidomal","fabimeme","autosticker","jogos","sistemGold","nsfw","registrarFIGUS","autodl","Odelete","jovempan","oliberal","futebol"];
+const CFG_BADGES = { antipolitica:"hot", antiporno:"hot", antinotas:"hot", autosticker:"hot", antirepeticoes:"hot", sogrupo:"novo" };
+
+function cfgRenderizarOpcoes(cfg0) {
+  cfg0 = cfg0 || {};
+  const grid = document.getElementById("checkboxGrid");
+  if (!grid) return;
+  const wellcome = Array.isArray(cfg0.wellcome) ? cfg0.wellcome : [{}, {}];
+  let html = "";
+  CFG_ORDEM.forEach(config => {
+    const on = !!cfg0[config];
+    const badge = CFG_BADGES[config] === "hot" ? '<span class="fz-cfg-badge fz-cfg-badge-hot">🔥 Hot</span>' :
+                  CFG_BADGES[config] === "novo" ? '<span class="fz-cfg-badge fz-cfg-badge-novo">🆕 Novo</span>' : "";
+    html += `<div class="fz-cfg-item" id="group-${config}">
+      <label for="${config}">${CFG_NOMES[config] || config} ${badge}</label>
+      <div class="fz-cfg-item-row">
+        <label class="fz-cfg-switch">
+          <input type="checkbox" name="${config}" id="${config}" class="config-checkbox"
+            data-config-name="${config}" data-friendly-name="${CFG_NOMES[config] || config}" ${on ? "checked" : ""} />
+          <span class="fz-cfg-slider"></span>
+        </label>
+        <span id="status-${config}" class="fz-cfg-status ${on ? "on" : "off"}">${on ? "Ativo" : "Inativo"}</span>
+      </div>
+    </div>`;
+  });
+  const bv1 = !!(wellcome[0] && wellcome[0].bemvindo1);
+  const bv2 = !!(wellcome[1] && wellcome[1].bemvindo2);
+  html += `<div class="fz-cfg-item" id="group-bemvindo1">
+    <label for="bemvindo1">🎶 Boas-Vindas com Áudio</label>
+    <div class="fz-cfg-item-row">
+      <label class="fz-cfg-switch">
+        <input type="checkbox" name="bemvindo1" id="bemvindo1" class="config-checkbox"
+          data-config-name="bemvindo1" data-friendly-name="Boas-Vindas com Áudio" ${bv1 ? "checked" : ""} />
+        <span class="fz-cfg-slider"></span>
+      </label>
+      <span id="status-bemvindo1" class="fz-cfg-status ${bv1 ? "on" : "off"}">${bv1 ? "Ativo" : "Inativo"}</span>
+    </div>
+  </div>
+  <div class="fz-cfg-item" id="group-bemvindo2">
+    <label for="bemvindo2">📝 Boas-Vindas com Texto e Imagem</label>
+    <div class="fz-cfg-item-row">
+      <label class="fz-cfg-switch">
+        <input type="checkbox" name="bemvindo2" id="bemvindo2" class="config-checkbox"
+          data-config-name="bemvindo2" data-friendly-name="Boas-Vindas com Texto e Imagem" ${bv2 ? "checked" : ""} />
+        <span class="fz-cfg-slider"></span>
+      </label>
+      <span id="status-bemvindo2" class="fz-cfg-status ${bv2 ? "on" : "off"}">${bv2 ? "Ativo" : "Inativo"}</span>
+    </div>
+  </div>
+  <div class="fz-cfg-text-options">
+    <div class="fz-cfg-item">
+      <label>🚪 Legenda de Entrada (Áudio)</label>
+      <input type="text" name="legendabv" id="legendabv" placeholder='Ex: "Bem-vindo! @#numerodele#"'
+        value="${(wellcome[0] && wellcome[0].legendabv) ? String(wellcome[0].legendabv).replace(/"/g, "&quot;") : ""}" />
+    </div>
+    <div class="fz-cfg-item">
+      <label>🚪 Legenda de Saída (Áudio)</label>
+      <input type="text" name="legendasaiu" id="legendasaiu" placeholder='Ex: "Até logo! @#numerodele#"'
+        value="${(wellcome[0] && wellcome[0].legendasaiu) ? String(wellcome[0].legendasaiu).replace(/"/g, "&quot;") : ""}" />
+    </div>
+    <div class="fz-cfg-item">
+      <label>🚪 Legenda de Entrada (Texto + Imagem)</label>
+      <input type="text" name="legendabv2" id="legendabv2" placeholder='Ex: "Seja bem-vindo!"'
+        value="${(wellcome[1] && wellcome[1].legendabv) ? String(wellcome[1].legendabv).replace(/"/g, "&quot;") : ""}" />
+    </div>
+    <div class="fz-cfg-item">
+      <label>🚪 Legenda de Saída (Texto + Imagem)</label>
+      <input type="text" name="legendasaiu2" id="legendasaiu2" placeholder='Ex: "Até logo!"'
+        value="${(wellcome[1] && wellcome[1].legendasaiu) ? String(wellcome[1].legendasaiu).replace(/"/g, "&quot;") : ""}" />
+    </div>
+  </div>
+  <button type="button" id="saveButton" onclick="cfgSalvarTodas()"><i class="fas fa-floppy-disk"></i> Salvar Alterações</button>
+  <input type="hidden" id="grupoIDInput" name="grupoID" value="">`;
+  grid.innerHTML = html;
+  cfgPainelIniciarListeners();
+}
+
+async function cfgCarregarConfigGrupo(grupoID) {
+  if (!grupoID) return;
+  try {
+    const url = API_URL + "/api/grupo-config/" + encodeURIComponent(grupoID);
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const cfg = (data && data.config && (data.config[0] || data.config)) || {};
+    cfgRenderizarOpcoes(cfg);
+    const input = document.getElementById("grupoIDInput");
+    if (input) input.value = grupoID;
+  } catch (e) {
+    console.error("cfgCarregarConfigGrupo", e);
+    cfgRenderizarOpcoes({});
+  }
+}
+
+function cfgAuthBody() {
+  try {
+    const s = JSON.parse(localStorage.getItem("fabi_session") || "{}");
+    return {
+      contaNumero: s.numero ? String(s.numero).replace(/\D/g, "") : "",
+      nome: s.nome || s.id || "",
+      nomeConta: s.nome || s.id || ""
+    };
+  } catch (e) { return {}; }
+}
+
+async function cfgSalvarTodas() {
+  const grupoID = cfgPainelObterGrupoSelecionado();
+  if (!grupoID) {
+    if (typeof Swal !== "undefined") Swal.fire("Atenção", "Selecione um grupo.", "warning");
+    return;
+  }
+  const body = { grupoID, ...cfgAuthBody() };
+  document.querySelectorAll("#checkboxGrid .config-checkbox").forEach(cb => {
+    body[cb.dataset.configName] = cb.checked ? "on" : "off";
+  });
+  ["legendabv","legendasaiu","legendabv2","legendasaiu2"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) body[id] = el.value;
+  });
+  try {
+    const resp = await fetch(API_URL + "/alterarConfig", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (typeof Swal !== "undefined") {
+      Swal.fire({ icon: data.success ? "success" : "error", title: data.message || (data.success ? "Salvo" : "Erro"), timer: 2000, showConfirmButton: false });
+    }
+  } catch (e) {
+    if (typeof Swal !== "undefined") Swal.fire("Erro", "Falha ao salvar.", "error");
+  }
+}
+
+
 function cfgPainelObterGrupoSelecionado() {
     return localStorage.getItem("grupoSelecionadoAdmin") || "";
 }
@@ -7534,10 +7705,10 @@ function cfgPainelIniciarListeners() {
                 statusSpan.className = `fz-cfg-status ${isChecked ? 'on' : 'off'}`;
             }
 
-            fetch('/alterarConfig', {
+            fetch(API_URL + '/alterarConfig', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ grupoID, [configName]: isChecked ? 'on' : 'off' })
+                body: JSON.stringify({ grupoID, [configName]: isChecked ? 'on' : 'off', ...cfgAuthBody() })
             })
             .then(r => r.json())
             .then(data => {
@@ -7554,10 +7725,7 @@ function cfgPainelIniciarListeners() {
 
 // Chamada pelo mudarSecao('configurar') sempre que o usuário abre essa seção
 function inicializarPainelConfiguracao() {
-    if (!cfgPainelJaInicializado) {
-        cfgPainelIniciarListeners();
-        cfgPainelJaInicializado = true;
-    }
+    cfgPainelJaInicializado = true;
     cfgPainelCarregarGrupos();
     cfgVerificarAdmin();
     g1AtualizarContador();
@@ -7581,22 +7749,31 @@ async function cfgVerificarAdmin() {
     }
 
     try {
-        const usuario = (window.SERVER_SESSION && window.SERVER_SESSION.numero) || '';
+        let usuario = (window.SERVER_SESSION && window.SERVER_SESSION.numero) || '';
+        try {
+            const s = JSON.parse(localStorage.getItem('fabi_session') || '{}');
+            if (s.numero) usuario = s.numero;
+        } catch (e) {}
+        const numUser = String(usuario).replace(/\D/g, '');
         const resp = await fetch(API_URL + "/grupos.json");
         const dados = await resp.json();
 
         const grupo = dados.find(g =>
-            g.groupId === grupoSelecionado ||
-            g.grupoID === grupoSelecionado ||
-            g.grupo === grupoSelecionado ||
-            g.id === grupoSelecionado
+            String(g.groupId) === String(grupoSelecionado) ||
+            String(g.grupoID) === String(grupoSelecionado) ||
+            String(g.grupo) === String(grupoSelecionado) ||
+            String(g.id) === String(grupoSelecionado)
         );
 
         if (!grupo) {
             cfgIsAdmin = false;
         } else {
-            const admins = (grupo.administradores || grupo.admins || []).map(a => a.trim());
-            cfgIsAdmin = admins.includes(usuario);
+            const admins = (grupo.administradores || grupo.admins || []).map(a => String(a).replace(/\D/g, ''));
+            cfgIsAdmin = !!numUser && admins.some(a => a && (a === numUser || a.endsWith(numUser) || numUser.endsWith(a)));
+        }
+        // Carrega toggles do grupo
+        if (cfgIsAdmin) {
+            await cfgCarregarConfigGrupo(grupoSelecionado);
         }
     } catch (err) {
         console.error('Erro ao verificar admin do grupo:', err);
@@ -11250,6 +11427,14 @@ window.onYouTubeIframeAPIReady = function() {
 };
 
 function criarYouTubePlayer(videoId) {
+    try {
+        const wrap = document.getElementById('watchPlayerContainer');
+        if (wrap) wrap.style.display = 'block';
+        const secao = document.getElementById('watchContainer') || document.querySelector('[data-section-panel="watch"]');
+        // garante seção watch visível se existir
+        if (typeof mudarSecao === 'function') { /* caller decides */ }
+    } catch (e) {}
+
     console.log('🎬 Criando player para:', videoId);
     if (!videoId) { console.warn('videoId vazio'); return; }
 
@@ -11289,8 +11474,8 @@ function criarYouTubePlayer(videoId) {
             watchPlayer = new YT.Player('watchPlayer', {
                 videoId: videoId,
                 playerVars: {
-                    autoplay: 0,
-                    controls: 0,
+                    autoplay: 1,
+                    controls: 1,
                     disablekb: 1,
                     modestbranding: 1,
                     rel: 0,
@@ -11329,7 +11514,13 @@ function criarYouTubePlayer(videoId) {
 function onPlayerReady(event) {
     console.log('✅ Player pronto!');
     watchPlayerReady = true;
-    
+    try {
+        if (event && event.target && typeof event.target.playVideo === 'function') {
+            event.target.playVideo();
+        } else if (watchPlayer && typeof watchPlayer.playVideo === 'function') {
+            watchPlayer.playVideo();
+        }
+    } catch (e) { console.warn('playVideo', e); }
     if (watchRoomAtual) {
         sincronizarTempo();
     }
