@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login – Fabi Bot</title>
+<style>
+  :root { --primary: #2563eb; --card: #111214; --border: #232323; --text: #E5E7EB; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: radial-gradient(circle at 10% 0%, #0d1424 0%, #060608 55%);
+    color: var(--text); padding: 20px;
+  }
+  .box {
+    width: 100%; max-width: 400px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; justify-content: center; }
+  .brand img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
+  h1 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+  label { display: block; font-size: 13px; margin: 12px 0 6px; color: #9CA3AF; }
+  input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: #0d0f12; color: var(--text); font-size: 15px;
+  }
+  input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.25); }
+  button {
+    width: 100%; margin-top: 18px; padding: 13px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff;
+    font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  button:disabled { opacity: .6; cursor: wait; }
+  .msg { margin-top: 14px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; display: none; }
+  .msg.error { display: block; background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid #ef4444; }
+  .msg.ok { display: block; background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid #10b981; }
+  .links { text-align: center; margin-top: 18px; font-size: 13px; color: #9CA3AF; }
+  .links a { color: #60a5fa; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="brand">
+      <img src="https://fabibot.vercel.app/flogo.jpg" alt="Fabi Bot" onerror="this.style.display='none'">
+      <h1>Fabi Bot — Login</h1>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <form id="loginForm">
+      <label for="username">Usuário</label>
+      <input id="username" name="username" type="text" required autocomplete="username" placeholder="Seu usuário">
+
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Sua senha">
+
+      <button type="submit" id="btn">Entrar</button>
+    </form>
+
+    <div class="links">
+      Não tem conta? <a href="https://chat.whatsapp.com/JgJTVYqRpMvBftNLR91U47" target="_blank" rel="noopener">Registre-se no grupo</a>
+      <br><br>
+      <a href="index.html">← Voltar ao site</a>
+    </div>
+  </div>
+
+<script>
+  // Mesmo proxy do painel
+  const PROXY_HOST = "https://orange-hill-2e61.gbscabral15.workers.dev";
+  const API_BACKEND = "http://br2.bronxyshost.com:4009";
+  function apiUrl(path) {
+    const target = path.startsWith("http") ? path : API_BACKEND.replace(/\/$/, "") + path;
+    const hostPath = API_BACKEND.replace(/^https?:\/\//, "");
+    return PROXY_HOST + "/" + hostPath + "/proxy?url=" + encodeURIComponent(target);
+  }
+
+  // Para onde ir após login (conectar.html ou index.html)
+  const params = new URLSearchParams(location.search);
+  const redirectTo = params.get("redirect") || "conectar.html";
+
+  const msg = document.getElementById("msg");
+  const form = document.getElementById("loginForm");
+  const btn = document.getElementById("btn");
+
+  function show(text, ok) {
+    msg.className = "msg " + (ok ? "ok" : "error");
+    msg.textContent = text;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = "Entrando...";
+    msg.className = "msg";
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      // Tenta API JSON (se existir no backend)
+      let res = await fetch(apiUrl("/api/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password })
+      });
+
+      // Fallback: form clássico /login (como o EJS)
+      if (res.status === 404 || res.status === 405) {
+        const fd = new FormData();
+        fd.append("username", username);
+        fd.append("password", password);
+        fd.append("redirect", redirectTo);
+        res = await fetch(apiUrl("/login"), {
+          method: "POST",
+          credentials: "include",
+          body: fd,
+          redirect: "follow"
+        });
+      }
+
+      let data = null;
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        data = await res.json();
+      }
+
+      if (res.ok && (data?.success !== false)) {
+        // Guarda sessão local para o front estático
+        const user = data?.user || data?.username || { id: username, nome: username };
+        try {
+          localStorage.setItem("fabi_session", JSON.stringify({
+            logado: true,
+            id: user.id || user.username || username,
+            nome: user.nome || user.name || username,
+            token: data?.token || null,
+            at: Date.now()
+          }));
+        } catch (_) {}
+        show("Login ok! Redirecionando...", true);
+        setTimeout(() => { location.href = redirectTo; }, 600);
+        return;
+      }
+
+      show((data && (data.message || data.error)) || "Usuário ou senha inválidos", false);
+    } catch (err) {
+      console.error(err);
+      show("Erro de conexão com o servidor. Tente de novo.", false);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Entrar";
+    }
+  });
+</script>
+</body>
+</html>
