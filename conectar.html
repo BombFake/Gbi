@@ -31,6 +31,16 @@ function authQuery() {
     const str = q.toString();
     return str ? ('?' + str) : '';
 }
+
+function authBodyFields() {
+    const s = getSessaoLocal() || {};
+    const o = {};
+    if (s.numero) o.contaNumero = String(s.numero).replace(/\D/g, '');
+    if (s.nome) { o.nomeConta = s.nome; o.nome = s.nome; }
+    else if (s.id) { o.nomeConta = s.id; o.nome = s.id; }
+    return o;
+}
+
 function withAuth(path) {
     const q = authQuery();
     if (!q) return path;
@@ -2721,7 +2731,7 @@ function criarNovaSessao() {
     fetch(apiUrl('/api/sessoes/nova'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numero, nome, modoPrivado })
+        body: JSON.stringify({ numero, nome, modoPrivado, ...authBodyFields() })
     })
     .then(response => response.json())
     .then(data => {
@@ -2983,7 +2993,7 @@ function gerarDeposito() {
     fetch(apiUrl('/api/carteira/deposito'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valor })
+        body: JSON.stringify({ valor, ...authBodyFields() })
     })
     .then(response => response.json())
     .then(data => {
@@ -3045,7 +3055,7 @@ function pagarComSaldo() {
     fetch(apiUrl('/api/planos/comprar-com-saldo'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(planoSelecionado)
+        body: JSON.stringify({ ...planoSelecionado, ...authBodyFields() })
     })
     .then(response => response.json())
     .then(data => {
@@ -3073,7 +3083,7 @@ function pagarComPix() {
     fetch(apiUrl('/api/planos/gerar-pix'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(planoSelecionado)
+        body: JSON.stringify({ ...planoSelecionado, ...authBodyFields() })
     })
     .then(response => response.json())
     .then(data => {
