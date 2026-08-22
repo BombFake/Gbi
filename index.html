@@ -11208,17 +11208,39 @@ window.onYouTubeIframeAPIReady = function() {
 
 function criarYouTubePlayer(videoId) {
     console.log('🎬 Criando player para:', videoId);
-    
+    if (!videoId) { console.warn('videoId vazio'); return; }
+
+    // Garante container visível (YouTube precisa de área com tamanho)
+    const wrap = document.getElementById('watchPlayerContainer');
+    if (wrap) wrap.style.display = 'block';
+
+    function startPlayer() {
     if (watchPlayer) {
         try { watchPlayer.destroy(); } catch(e) {}
         watchPlayer = null;
     }
-    
     watchPlayerReady = false;
-    
     const playerDiv = document.getElementById('watchPlayer');
     if (playerDiv) playerDiv.innerHTML = '';
-    
+
+    if (!(window.YT && window.YT.Player)) {
+        console.warn('YT ainda não pronto — aguardando API...');
+        loadYouTubeAPI();
+        let tries = 0;
+        const iv = setInterval(() => {
+            tries++;
+            if (window.YT && window.YT.Player) {
+                clearInterval(iv);
+                startPlayer();
+            } else if (tries > 40) {
+                clearInterval(iv);
+                console.error('YouTube API não carregou');
+                if (typeof Swal !== 'undefined') Swal.fire('Erro', 'Não foi possível carregar o YouTube. Desative bloqueadores e tente de novo.', 'error');
+            }
+        }, 250);
+        return;
+    }
+
     setTimeout(() => {
         try {
             watchPlayer = new YT.Player('watchPlayer', {
@@ -11256,6 +11278,9 @@ function criarYouTubePlayer(videoId) {
             console.error('❌ Erro ao criar player:', e);
         }
     }, 300);
+    } // fim startPlayer
+
+    startPlayer();
 }
 
 function onPlayerReady(event) {
