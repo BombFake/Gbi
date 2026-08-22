@@ -2922,7 +2922,8 @@ async function cancelarPareamentoAtual(sessaoNome) {
         const resp = await fetch(apiUrl(`/api/sessoes/${encodeURIComponent(sessao)}/cancelar`), { method: 'POST' });
         const data = await resp.json().catch(() => ({}));
         if (data.success) {
-            toastr.success('Pareamento cancelado. A sessão não será recriada automaticamente.', 'Cancelado');
+            toastr.success(data.sessaoDevolvida ? 'Pareamento cancelado e 1 sessão devolvida à sua conta.' : (data.message || 'Pareamento cancelado.'), 'Cancelado');
+            if (typeof carregarCarteira === 'function') carregarCarteira();
             const modalEl = document.getElementById('codigoImediatoModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();

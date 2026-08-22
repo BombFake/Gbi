@@ -7359,8 +7359,29 @@ function cfgPainelObterGrupoSelecionado() {
 
 async function cfgPainelCarregarGrupos() {
     try {
-        const resp = await fetch("/grupos.json");
-        cfgGruposOriginais = await resp.json();
+        const resp = await fetch(API_URL + "/grupos.json");
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        let lista = await resp.json();
+        if (!Array.isArray(lista)) lista = [];
+
+        // Se logado, prioriza grupos em que o número do usuário é admin
+        const numUser = String(
+            (window.SERVER_SESSION && window.SERVER_SESSION.numero) ||
+            (typeof currentUser !== "undefined" && currentUser && currentUser.numero) ||
+            ""
+        ).replace(/\D/g, "");
+
+        if (numUser) {
+            const meus = lista.filter(g => {
+                const admins = (g.administradores || g.admins || []).map(a => String(a).replace(/\D/g, ""));
+                return admins.some(a => a && (a === numUser || a.endsWith(numUser) || numUser.endsWith(a)));
+            });
+            // se encontrou grupos do user, mostra só eles; senão mostra todos (fallback)
+            cfgGruposOriginais = meus.length ? meus : lista;
+        } else {
+            cfgGruposOriginais = lista;
+        }
+
         cfgGruposFiltrados = cfgGruposOriginais;
         cfgPainelAtualizarLista();
     } catch (err) {
@@ -7561,7 +7582,7 @@ async function cfgVerificarAdmin() {
 
     try {
         const usuario = (window.SERVER_SESSION && window.SERVER_SESSION.numero) || '';
-        const resp = await fetch('/grupos.json');
+        const resp = await fetch(API_URL + "/grupos.json");
         const dados = await resp.json();
 
         const grupo = dados.find(g =>
@@ -7603,7 +7624,7 @@ if (cfgIsAdmin) {
     const tituloForm = document.querySelector('.fz-cfg-form-card h3');
     if (tituloForm && cfgIsAdmin) {
         try {
-            const resp2 = await fetch('/grupos.json');
+            const resp2 = await fetch(API_URL + "/grupos.json");
             const dados2 = await resp2.json();
             const g = dados2.find(g => g.grupoID === grupoSelecionado);
             const nomeGrupo = g?.nome || grupoSelecionado;
@@ -7858,9 +7879,9 @@ async function carregarPainelAtividade(grupoId) {
         
         // Buscar os dados
         const [respCount, respReg, respBan] = await Promise.allSettled([
-            fetch('/countmsg.json'),
-            fetch('/registro.json'),
-            fetch('/banidos.json')
+            fetch(API_URL + "/countmsg.json"),
+            fetch(API_URL + "/registro.json"),
+            fetch(API_URL + "/banidos.json")
         ]);
 
         // Processar respostas
@@ -7907,7 +7928,7 @@ async function carregarPainelAtividade(grupoId) {
                 console.log('🔍 Grupo não encontrado no countmsg.json, tentando buscar por nome...');
                 // Buscar o nome do grupo no grupos.json
                 try {
-                    const respGrupos = await fetch('/grupos.json');
+                    const respGrupos = await fetch(API_URL + "/grupos.json");
                     const grupos = await respGrupos.json();
                     const grupoInfo = grupos.find(g => 
                         String(g.grupoID || g.id || g.groupId || "") === String(grupoId) ||
